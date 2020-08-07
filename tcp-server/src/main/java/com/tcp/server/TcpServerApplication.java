@@ -4,18 +4,23 @@ import java.io.IOException;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.autoconfigure.domain.EntityScan;
 
 import com.tcp.server.controllers.Server;
 
+/**
+ * Classe principal do servidor
+ * @author Alex Juno Bócoli
+ *
+ */
 @SpringBootApplication
-//@EntityScan("com.tcp.server.models")
 public class TcpServerApplication {
 
+	/**
+	 * Método principal
+	 * @param args
+	 */
 	public static void main(String[] args) {
 		SpringApplication.run(TcpServerApplication.class, args);
-		
-		//Timezone t1 = new Timezone("Brazil", "America/Araguaina", 3, 0, "-");
 		
         Server server = new Server();
         

@@ -28,9 +28,19 @@ import com.tcp.server.models.User;
 import com.tcp.server.sql.Sql;
 
 @EntityScan("com.tcp.server.models")
+/**
+ * Classe que trata o comportamento do servidor
+ * @author Alex Juno Bócoli
+ *
+ */
 public class Server {
 	private ServerSocket serverSocket;
 	
+	/**
+	 * Inicia o servidor
+	 * @param port a porta utilizada pelo servidor
+	 * @throws IOException
+	 */
     public void startServer(int port) throws IOException {
         serverSocket = new ServerSocket(port);
         while (true) {
@@ -38,19 +48,35 @@ public class Server {
         }
     }
  
+    /**
+     * Finaliza o servidor
+     * @throws IOException
+     */
     public void stopServer() throws IOException {
         serverSocket.close();
     }
  
+    /**
+     * Classe que trata as requisições do cliente
+     * @author Alex Juno Bócoli
+     *
+     */
     private static class ClientHandler extends Thread {
         private Socket clientSocket;
         private PrintWriter out;
         private BufferedReader in;
  
+        /**
+         * Construtor
+         * @param socket o socket de comunicação
+         */
         public ClientHandler(Socket socket) {
             this.clientSocket = socket;
         }
  
+        /**
+         * Inicia a thread para tratar a requisição do cliente
+         */
         public void run() {
         	try {
         		out = new PrintWriter(clientSocket.getOutputStream(), true);
@@ -194,7 +220,9 @@ public class Server {
             			ResultSet rs = sql.selectTimezone(dataAscii);
             			
             			if (!rs.next()) {
-            				
+                			// Envio da resposta           			
+        	        		String ack = "0A05A0280D";
+        	        		out.println(ack);
             			}
             			else {            				
             				int hour = rs.getInt(4);
@@ -253,7 +281,10 @@ public class Server {
 	            			out.println(protocol);
             			}
             		}
-        		}                
+        		}
+        		else {
+        			System.out.println("Resposta recebida com erros!");
+        		}
         			 
 	            in.close();
 	            out.close();

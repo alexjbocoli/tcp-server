@@ -6,7 +6,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
 
 import com.tcp.server.models.DateTime;
 import com.tcp.server.models.MessageDateTime;
@@ -14,18 +13,29 @@ import com.tcp.server.models.MessageText;
 import com.tcp.server.models.MessageUser;
 import com.tcp.server.models.User;
 
+/**
+ * Classe que contém as consultas SQL realizadas pelo servidor
+ * @author Alex Juno Bócoli
+ *
+ */
 public class Sql {
-    // JDBC driver name and database URL
+    // Nome do driver JDBC e URL do banco de dados
     static final String JDBC_DRIVER = "org.h2.Driver";
     static final String DB_URL = "jdbc:h2:mem:testdb";
 
-    //  Database credentials
+    // Credenciais do banco de dados
     static final String USER = "sa";
     static final String PASS = "123456";
     
 	private Connection conn;
 	private Statement st;
 	
+	/**
+	 * Insere uma mensagem de texto na tabela MESSAGETEXT
+	 * @param txtMsg a mensagem a ser inserida
+	 * @throws SQLException
+	 * @throws ClassNotFoundException
+	 */
     public void insertMessageText(MessageText txtMsg) throws SQLException, ClassNotFoundException {
     	Class.forName(JDBC_DRIVER);
     	conn = DriverManager.getConnection(DB_URL, USER, PASS);
@@ -38,24 +48,15 @@ public class Sql {
     	st.executeUpdate(sql);
     }
     
+    /**
+     * Insere um usuário na tabela USER
+     * @param user o usuário a ser inserido
+     * @throws ClassNotFoundException
+     * @throws SQLException
+     */
     public void insertUser(User user) throws ClassNotFoundException, SQLException {
     	Class.forName(JDBC_DRIVER);
     	conn = DriverManager.getConnection(DB_URL, USER, PASS);
-    	
-    	/**String sql = "INSERT INTO USER (AGE, WEIGHT, HEIGHT, NAME, NAME_SIZE) VALUES (?, ?, ?, ?, ?)";
-    	
-    	PreparedStatement st = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
-    	st.setObject(1, user.getAge());
-    	st.setObject(2, user.getWeight());
-    	st.setObject(3, user.getHeight());
-    	st.setObject(4, user.getName());
-    	st.setObject(5, user.getNameSize());
-    	st.execute();
-    	
-    	ResultSet rs = st.getGeneratedKeys();
-    	rs.next();
-    	
-    	return rs.getLong(1);**/
     	
     	st = conn.createStatement();
     	
@@ -66,6 +67,12 @@ public class Sql {
     	st.executeUpdate(sql);
     }
     
+    /**
+     * Insere uma mensagem de usuário na tabela MESSAGEUSER
+     * @param userMsg a mensagem a ser inserida
+     * @throws ClassNotFoundException
+     * @throws SQLException
+     */
     public void insertMessageUser(MessageUser userMsg) throws ClassNotFoundException, SQLException {
     	Class.forName(JDBC_DRIVER);
     	conn = DriverManager.getConnection(DB_URL, USER, PASS);
@@ -83,6 +90,13 @@ public class Sql {
     	st.execute();
     }
     
+    /**
+     * Consulta um fuso horário na tabela TIMEZONE
+     * @param timezone o fuso horário a ser consultado
+     * @return os dados do fuso horário consultado
+     * @throws ClassNotFoundException
+     * @throws SQLException
+     */
     public ResultSet selectTimezone(String timezone) throws ClassNotFoundException, SQLException {
     	Class.forName(JDBC_DRIVER);
     	conn = DriverManager.getConnection(DB_URL, USER, PASS);
@@ -96,6 +110,12 @@ public class Sql {
     	return rs;
     }
     
+    /**
+     * Insere uma data e hora na tabela DATETIME
+     * @param dateTime a data e hora a serem inseridas
+     * @throws ClassNotFoundException
+     * @throws SQLException
+     */
     public void insertDateTime(DateTime dateTime) throws ClassNotFoundException, SQLException {
     	Class.forName(JDBC_DRIVER);
     	conn = DriverManager.getConnection(DB_URL, USER, PASS);
@@ -113,6 +133,12 @@ public class Sql {
     	st.execute();
     }
     
+    /**
+     * Insere uma mensagem de data e hora na tabela MESSAGEDATETIME
+     * @param dtMsg a mensagem a ser inserida
+     * @throws ClassNotFoundException
+     * @throws SQLException
+     */
     public void insertMessageDateTime(MessageDateTime dtMsg) throws ClassNotFoundException, SQLException {
     	Class.forName(JDBC_DRIVER);
     	conn = DriverManager.getConnection(DB_URL, USER, PASS);

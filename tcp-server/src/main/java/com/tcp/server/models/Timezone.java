@@ -2,22 +2,16 @@ package com.tcp.server.models;
 
 import java.io.Serializable;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.Table;
-
+/**
+ * Classe modelo para o fuso horário: não utilizada pois o servidor cria a tabela TIMEZONE no banco de dados na inicialização 
+ * por meio do arquivo "schema.sql" localizado em "\src\main\resources"
+ * @author GP-ALEX
+ *
+ */
 //@Entity
 //@Table(name = "timezone")
 public class Timezone implements Serializable {
 	private static final long serialVersionUID = 1L;
-	
-    //@Id
-    //@GeneratedValue(strategy = GenerationType.IDENTITY)
-    //@Column(name = "id")
-	private int id;
 	
     //@Column(name = "location")
 	private String location;
