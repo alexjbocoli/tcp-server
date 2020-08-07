@@ -1,6 +1,8 @@
 package com.tcp.server.controllers;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
@@ -33,7 +35,7 @@ import com.tcp.server.sql.Sql;
  * @author Alex Juno Bócoli
  *
  */
-public class Server {
+public class Server {	
 	private ServerSocket serverSocket;
 	
 	/**
@@ -65,6 +67,8 @@ public class Server {
         private Socket clientSocket;
         private PrintWriter out;
         private BufferedReader in;
+        
+        static File log = new File("LOG_SERVER.txt");
  
         /**
          * Construtor
@@ -77,14 +81,18 @@ public class Server {
         /**
          * Inicia a thread para tratar a requisição do cliente
          */
-        public void run() {
+        public void run() {        	
         	try {
+        		FileWriter writer = new FileWriter(log, true);
+        		
         		out = new PrintWriter(clientSocket.getOutputStream(), true);
                 in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
                 
                 // Protocolo recebido
                 String protocol = in.readLine();
-                System.out.println("Mensagem recebida: " + protocol);
+                System.out.println("Mensagem recebida do cliente: " + protocol);
+                logWriter(writer, "Conexão estabelecida com o cliente.\n");
+                logWriter(writer, "Mensagem recebida do cliente: " + protocol + "\n");
                 
                 // Conversão do protocolo de string para array
         		ArrayList<String> msgHexArray = new ArrayList<String>();
@@ -108,13 +116,16 @@ public class Server {
         		String hexCrc = Integer.toHexString((int) crc8.getValue());
         		System.out.println("CRC calculado (dec): " + crc8.getValue());
         		System.out.println("CRC calculado (hex): " + hexCrc);
+        		logWriter(writer, "CRC calculado (dec): " + crc8.getValue() + "\n");
+        		logWriter(writer, "CRC calculado (hex): " + hexCrc + "\n");
         		
         		// Se o CRC recalculado = 0, insere no banco e envia ACK ao cliente
         		if (hexCrc.equals("0")) {       			
         			// Se for mensagem de texto
         			if (msgHexArray.get(2).equals("A1")) {
-        				System.out.println("Mensagem sem erros! Enviando ACK...");
+        				System.out.println("Mensagem sem erros! Enviando ACK ao cliente...");
         				System.out.println();
+        				logWriter(writer, "Mensagem sem erros! Enviando ACK ao cliente...\n");
         				
         				// Conversão
             			int init = Integer.parseInt(msgHexArray.get(0), 16);
@@ -151,8 +162,9 @@ public class Server {
         			else
     				// Se for informações de usuário
             		if (msgHexArray.get(2).equals("A2")) {
-            			System.out.println("Mensagem sem erros! Enviando ACK...");
+            			System.out.println("Mensagem sem erros! Enviando ACK ao cliente...");
             			System.out.println();
+            			logWriter(writer, "Mensagem sem erros! Enviando ACK ao cliente...\n");
             			
             			// Conversão
             			int init = Integer.parseInt(msgHexArray.get(0), 16);
@@ -263,7 +275,6 @@ public class Server {
 	            			crc8.reset();
 	            			crc8.update(inputCrc);
 	            			hexCrc = Integer.toHexString((int) crc8.getValue());
-	            			System.out.println("Hex CRC: " + hexCrc);
 	            			
 	            			// Criação do objeto DateTime e MessageDateTime e inserção no banco de dados
 	            			DateTime dateTime = new DateTime(reqTime.getDayOfMonth(), reqTime.getMonthValue(), 
@@ -275,17 +286,28 @@ public class Server {
 	                		
 	            			// Envio da resposta
 	            			protocol = "0A0BA3" + dateHex + hexCrc + "0D";
-                			System.out.println("Mensagem sem erros! Enviando mensagem de resposta: " + protocol);
+                			System.out.println("Mensagem sem erros! Enviando mensagem de resposta ao cliente: " + protocol);
                 			System.out.println("CRC calculado (dec): " + crc8.getValue());
                 			System.out.println("CRC calculado (hex): " + hexCrc);
+                			System.out.println();
+                			logWriter(writer, "Mensagem sem erros! Enviando mensagem de resposta ao cliente: " + protocol + "\n");
+                			logWriter(writer, "CRC calculado (dec): " + crc8.getValue() + "\n");
+                			logWriter(writer, "CRC calculado (hex): " + hexCrc + "\n");
 	            			out.println(protocol);
             			}
             		}
         		}
         		else {
         			System.out.println("Resposta recebida com erros!");
+        			logWriter(writer, "Resposta recebida com erros!\n");
         		}
-        			 
+        		
+        		if (log.exists()) {
+        			writer.write("\n");
+        		}
+        		
+        		writer.close();
+        		
 	            in.close();
 	            out.close();
 	            clientSocket.close();
@@ -298,4 +320,17 @@ public class Server {
 			} 
         }
     }
+    
+	/**
+	 * Escreve os logs em arquivo
+	 * @param writer o objeto responsável por escrever no arquivo
+	 * @param text o texto a ser escrito
+	 * @throws IOException
+	 */
+	public static void logWriter(FileWriter writer, String text) throws IOException {		
+		Date dateTime = new Date();
+		DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+		
+		writer.write(dateFormat.format(dateTime) + ": " + text);
+	}
 }
