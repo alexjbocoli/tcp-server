@@ -3,8 +3,6 @@ package com.tcp.server.controllers;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -23,7 +21,6 @@ import org.springframework.boot.autoconfigure.domain.EntityScan;
 
 import com.tcp.server.utils.CRC8;
 import com.tcp.server.models.DateTime;
-import com.tcp.server.models.Message;
 import com.tcp.server.models.MessageDateTime;
 import com.tcp.server.models.MessageText;
 import com.tcp.server.models.MessageUser;
@@ -47,8 +44,6 @@ public class Server {
  
     private static class ClientHandler extends Thread {
         private Socket clientSocket;
-        //private ObjectOutputStream out;
-        //private ObjectInputStream in;
         private PrintWriter out;
         private BufferedReader in;
  
@@ -58,21 +53,18 @@ public class Server {
  
         public void run() {
         	try {
-                //out = new ObjectOutputStream(clientSocket.getOutputStream());
-                //in = new ObjectInputStream(clientSocket.getInputStream());
         		out = new PrintWriter(clientSocket.getOutputStream(), true);
                 in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
                 
                 // Protocolo recebido
-                System.out.println("Mensagem recebida!");
                 String protocol = in.readLine();
+                System.out.println("Mensagem recebida: " + protocol);
                 
                 // Conversão do protocolo de string para array
         		ArrayList<String> msgHexArray = new ArrayList<String>();
         		for (String hex: protocol.replaceAll( "..(?!$)", "$0," ).split( "," ) ) {
         			msgHexArray.add(hex);
         		}
-        		System.out.println(msgHexArray);
         		
         		// Construção da string para cálculo do CRC (bytes, frame, data, crc)
         		String crcCalc = "";
@@ -88,13 +80,15 @@ public class Server {
         		crc8.reset();
         		crc8.update(inputCrc);
         		String hexCrc = Integer.toHexString((int) crc8.getValue());
-        		System.out.println("Hex CRC: " + hexCrc);
+        		System.out.println("CRC calculado (dec): " + crc8.getValue());
+        		System.out.println("CRC calculado (hex): " + hexCrc);
         		
         		// Se o CRC recalculado = 0, insere no banco e envia ACK ao cliente
         		if (hexCrc.equals("0")) {       			
         			// Se for mensagem de texto
         			if (msgHexArray.get(2).equals("A1")) {
         				System.out.println("Mensagem sem erros! Enviando ACK...");
+        				System.out.println();
         				
         				// Conversão
             			int init = Integer.parseInt(msgHexArray.get(0), 16);
@@ -132,6 +126,7 @@ public class Server {
     				// Se for informações de usuário
             		if (msgHexArray.get(2).equals("A2")) {
             			System.out.println("Mensagem sem erros! Enviando ACK...");
+            			System.out.println();
             			
             			// Conversão
             			int init = Integer.parseInt(msgHexArray.get(0), 16);
@@ -180,6 +175,7 @@ public class Server {
     				// Se for solicitação de data e hora
             		if (msgHexArray.get(2).equals("A3")) {
             			System.out.println("Mensagem sem erros! Enviando data e hora...");
+            			System.out.println();
             			
             			// Extrai o fuso horário requisitado do protocolo recebido
             			StringBuilder sb = new StringBuilder();
@@ -204,8 +200,7 @@ public class Server {
             			int minute = rs.getInt(5);
             			String balance = rs.getString(6);
             			
-            			// Data e hora em Greenwich
-            			ZonedDateTime utc = ZonedDateTime.now(ZoneOffset.UTC);
+            			// Data e hora no fuso horário requisitado
             			ZonedDateTime reqTime;
             			if (balance.equals("-")) {           			
             				reqTime = ZonedDateTime.now(ZoneOffset.ofHoursMinutes(-hour, -minute));
@@ -259,13 +254,10 @@ public class Server {
 	            out.close();
 	            clientSocket.close();
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			} catch (ClassNotFoundException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			} catch (SQLException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			} 
         }
