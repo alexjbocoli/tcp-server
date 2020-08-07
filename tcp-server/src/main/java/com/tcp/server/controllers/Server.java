@@ -173,10 +173,7 @@ public class Server {
             		}
         			else
     				// Se for solicitação de data e hora
-            		if (msgHexArray.get(2).equals("A3")) {
-            			System.out.println("Mensagem sem erros! Enviando data e hora...");
-            			System.out.println();
-            			
+            		if (msgHexArray.get(2).equals("A3")) {          			
             			// Extrai o fuso horário requisitado do protocolo recebido
             			StringBuilder sb = new StringBuilder();
             			for (int i = 3; i <= msgHexArray.size() - 3; i++) {
@@ -195,58 +192,66 @@ public class Server {
             			// Consulta na tabela TIMEZONE pelo fuso horário requisitado
             			Sql sql = new Sql();
             			ResultSet rs = sql.selectTimezone(dataAscii);
-            			rs.next();	
-            			int hour = rs.getInt(4);
-            			int minute = rs.getInt(5);
-            			String balance = rs.getString(6);
             			
-            			// Data e hora no fuso horário requisitado
-            			ZonedDateTime reqTime;
-            			if (balance.equals("-")) {           			
-            				reqTime = ZonedDateTime.now(ZoneOffset.ofHoursMinutes(-hour, -minute));
+            			if (!rs.next()) {
+            				
             			}
-            			else {
-            				reqTime = ZonedDateTime.now(ZoneOffset.ofHoursMinutes(+hour, +minute));
+            			else {            				
+            				int hour = rs.getInt(4);
+            				int minute = rs.getInt(5);
+            				String balance = rs.getString(6);
+            			
+	            			// Data e hora no fuso horário requisitado
+	            			ZonedDateTime reqTime;
+	            			if (balance.equals("-")) {           			
+	            				reqTime = ZonedDateTime.now(ZoneOffset.ofHoursMinutes(-hour, -minute));
+	            			}
+	            			else {
+	            				reqTime = ZonedDateTime.now(ZoneOffset.ofHoursMinutes(+hour, +minute));
+	            			}
+	            			
+	            			// Preparação da mensagem
+	            			String dayHex = Integer.toHexString(reqTime.getDayOfMonth());
+	            			if (dayHex.length() == 1) dayHex = "0" + dayHex;
+	            			String monthHex = Integer.toHexString(reqTime.getMonthValue());
+	            			if (monthHex.length() == 1) monthHex = "0" + monthHex;
+	            			String yearHex = Integer.toHexString(reqTime.getYear() - 2000);
+	            			if (yearHex.length() == 1) yearHex = "0" + yearHex;
+	            			String hourHex = Integer.toHexString(reqTime.getHour());
+	            			if (hourHex.length() == 1) hourHex = "0" + hourHex;
+	            			String minuteHex = Integer.toHexString(reqTime.getMinute());
+	            			if (minuteHex.length() == 1) minuteHex = "0" + minuteHex;
+	            			String secondHex = Integer.toHexString(reqTime.getSecond());
+	            			if (secondHex.length() == 1) secondHex = "0" + secondHex;
+	            			String dateHex = dayHex + monthHex + yearHex + hourHex + minuteHex + secondHex;
+	            			
+	            			// Construção da string para cálculo do CRC (bytes, frame, data)
+	            			crcCalc = "0B" + "A3" + dateHex;
+	            			
+	            			// Conversão em array de bytes para cálculo do CRC
+	            			inputCrc = DatatypeConverter.parseHexBinary(crcCalc);
+	            			
+	            			// Cálculo do CRC
+	            			crc8.reset();
+	            			crc8.update(inputCrc);
+	            			hexCrc = Integer.toHexString((int) crc8.getValue());
+	            			System.out.println("Hex CRC: " + hexCrc);
+	            			
+	            			// Criação do objeto DateTime e MessageDateTime e inserção no banco de dados
+	            			DateTime dateTime = new DateTime(reqTime.getDayOfMonth(), reqTime.getMonthValue(), 
+	                			reqTime.getYear() - 2000, reqTime.getHour(), reqTime.getMinute(), reqTime.getSecond());
+	                		sql.insertDateTime(dateTime);
+	                			
+	                		MessageDateTime dtMsg = new MessageDateTime(10, 11, 163, (int) crc8.getValue(), 13, dateTime);
+	                		sql.insertMessageDateTime(dtMsg);
+	                		
+	            			// Envio da resposta
+	            			protocol = "0A0BA3" + dateHex + hexCrc + "0D";
+                			System.out.println("Mensagem sem erros! Enviando mensagem de resposta: " + protocol);
+                			System.out.println("CRC calculado (dec): " + crc8.getValue());
+                			System.out.println("CRC calculado (hex): " + hexCrc);
+	            			out.println(protocol);
             			}
-            			
-            			// Preparação da mensagem
-            			String dayHex = Integer.toHexString(reqTime.getDayOfMonth());
-            			if (dayHex.length() == 1) dayHex = "0" + dayHex;
-            			String monthHex = Integer.toHexString(reqTime.getMonthValue());
-            			if (monthHex.length() == 1) monthHex = "0" + monthHex;
-            			String yearHex = Integer.toHexString(reqTime.getYear() - 2000);
-            			if (yearHex.length() == 1) yearHex = "0" + yearHex;
-            			String hourHex = Integer.toHexString(reqTime.getHour());
-            			if (hourHex.length() == 1) hourHex = "0" + hourHex;
-            			String minuteHex = Integer.toHexString(reqTime.getMinute());
-            			if (minuteHex.length() == 1) minuteHex = "0" + minuteHex;
-            			String secondHex = Integer.toHexString(reqTime.getSecond());
-            			if (secondHex.length() == 1) secondHex = "0" + secondHex;
-            			String dateHex = dayHex + monthHex + yearHex + hourHex + minuteHex + secondHex;
-            			
-            			// Construção da string para cálculo do CRC (bytes, frame, data)
-            			crcCalc = "0B" + "A3" + dateHex;
-            			
-            			// Conversão em array de bytes para cálculo do CRC
-            			inputCrc = DatatypeConverter.parseHexBinary(crcCalc);
-            			
-            			// Cálculo do CRC
-            			crc8.reset();
-            			crc8.update(inputCrc);
-            			hexCrc = Integer.toHexString((int) crc8.getValue());
-            			System.out.println("Hex CRC: " + hexCrc);
-            			
-            			// Criação do objeto DateTime e MessageDateTime e inserção no banco de dados
-            			DateTime dateTime = new DateTime(reqTime.getDayOfMonth(), reqTime.getMonthValue(), 
-                			reqTime.getYear() - 2000, reqTime.getHour(), reqTime.getMinute(), reqTime.getSecond());
-                		sql.insertDateTime(dateTime);
-                			
-                		MessageDateTime dtMsg = new MessageDateTime(10, 11, 163, (int) crc8.getValue(), 13, dateTime);
-                		sql.insertMessageDateTime(dtMsg);
-            			
-            			// Envio da resposta
-            			protocol = "0A0BA3" + dateHex + hexCrc + "0D"; 
-            			out.println(protocol);
             		}
         		}                
         			 
