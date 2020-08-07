@@ -11,6 +11,7 @@
 	<groupId>com.tcp</groupId>
 	<artifactId>tcp-server</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
+	<packaging>jar</packaging>
 	<name>tcp-server</name>
 	<description>Servidor TCP desenvolvido em Java com banco de dados H2</description>
 

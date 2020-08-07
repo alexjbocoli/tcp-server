@@ -23,13 +23,19 @@ public class TcpServerApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(TcpServerApplication.class, args);
 		
+		try {
+			Thread.sleep(4000);
+		} catch (InterruptedException e1) {
+			e1.printStackTrace();
+		}
+		
 		Scanner input = new Scanner(System.in);
 		
 		System.out.print("Informe a porta do servidor: ");
 		int port = input.nextInt();
 		System.out.println("Servidor iniciado na porta " + port + ".");
 		
-        Server server = new Server();
+		Server server = new Server();
         
         try {
 			server.startServer(port);
